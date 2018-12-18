@@ -69,14 +69,14 @@
      visibility: visible;
 }
  .feedback-tooltip {
-     position: relative;
+     position: absolute;
      display: inline-block;
      border-bottom: 1px dotted black;
      z-index: 100000;
 }
 
 .feedback-icon {
-    position: relative;
+    position: absolute;
     display: inline-block;
     border-bottom: 1px dotted black;
     z-index: 10000;

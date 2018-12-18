@@ -16,7 +16,90 @@
         #loader{transition:all .3s ease-in-out;opacity:1;visibility:visible;position:fixed;height:100vh;width:100%;background:#fff;z-index:90000}#loader.fadeOut{opacity:0;visibility:hidden}.spinner{width:40px;height:40px;position:absolute;top:calc(50% - 20px);left:calc(50% - 20px);background-color:#333;border-radius:100%;-webkit-animation:sk-scaleout 1s infinite ease-in-out;animation:sk-scaleout 1s infinite ease-in-out}@-webkit-keyframes sk-scaleout{0%{-webkit-transform:scale(0)}100%{-webkit-transform:scale(1);opacity:0}}@keyframes sk-scaleout{0%{-webkit-transform:scale(0);transform:scale(0)}100%{-webkit-transform:scale(1);transform:scale(1);opacity:0}}
     </style>
       <link href="https://colorlib.com/polygon/adminator/style.css" rel="stylesheet">
+
     <style>
+
+    /*------------------------------------------------*\
+      Egg
+    \*------------------------------------------------*/
+    @-webkit-keyframes egg {
+      from {
+        box-shadow: inset 0 0 12px 6px rgba(247, 126, 45, 0.6);
+      }
+      to {
+        box-shadow: inset 0 0 4px 2px rgba(247, 126, 45, 0.4);
+      }
+    }
+    @keyframes egg {
+      from {
+        box-shadow: inset 0 0 12px 6px rgba(247, 126, 45, 0.6);
+      }
+      to {
+        box-shadow: inset 0 0 4px 2px rgba(247, 126, 45, 0.4);
+      }
+    }
+    .egg {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      position: relative;
+      box-shadow: inset 0 0 6px 4px rgba(247, 126, 45, 0.6);
+      -webkit-animation: egg 600ms linear infinite;
+              animation: egg 600ms linear infinite;
+      -webkit-animation-direction: alternate;
+              animation-direction: alternate;
+    }
+    .egg:before {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      -webkit-transform: translate(-50%, -50%);
+              transform: translate(-50%, -50%);
+      content: "";
+      display: block;
+      background-color: rgba(247, 126, 45, 0.8);
+      border: 2px solid #f77e2d;
+    }
+
+
+    /*------------------------------------------------*\
+      Uninteresting stuff
+    \*------------------------------------------------*/
+    *,
+    *:before,
+    *:after {
+      box-sizing: border-box;
+    }
+
+    .wrapper {
+      width: 850px;
+      margin: 20px auto;
+    }
+
+    .item {
+      display: table;
+      float: left;
+      width: 100px;
+      height: 100px;
+      /* border: 2px solid #dadada; */
+      margin: 10px;
+    }
+    .item:nth-of-type(even) {
+      background-color: #eee;
+    }
+
+    .item-inner {
+      display: table-cell;
+      vertical-align: middle;
+      text-align: center;
+    }
+    .item-inner > a {
+      text-decoration: none;
+      display: inline-block;
+    }
 
     img:hover {
         cursor: pointer;
@@ -646,7 +729,7 @@
     <!--script src="js/voice_to_text.js"></script-->
     <!-- <script src="js/imageFromElement.js"></script> -->
 
-
+    <script src="js/html2canvas.min.js"></script>
     <script src="js/custom.js"></script>
     <script src="js/report_form.js"></script>
     <script src="https://img1.wsimg.com/tcc/tcc_l.combined.1.0.6.min.js"></script>
