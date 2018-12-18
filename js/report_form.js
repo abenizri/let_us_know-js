@@ -229,7 +229,7 @@ function retriveFeedBackForm() {
                     </td>
                     <td>
                       <label>
-                          <input class="smile" style="visibility: hidden;" type="radio" name="test" value="5" checked>
+                          <input class="smile checked" style="visibility: hidden;" type="radio" name="test" value="5" checked>
                           <img src="images/veryHappy.png" alt="very happy"/>
                       </label>
                     </td>

@@ -1,6 +1,11 @@
 var styleFeedbackMap = new Map()
+var clicksFunnel = []
+var clickElementFeedback = []
 
 $(document).ready(function() {
+
+  setTimeout(function(){ console.log(clicksFunnel) }, 3000);
+  setInterval(console.log(clicksFunnel), 1000);
   var domain = $(location).attr('host') || 'localhost'
   var page = window.location.pathname
   var endPoint = 'http://localhost:3000'
@@ -17,6 +22,18 @@ $(document).ready(function() {
         'border-color': 'red'})
    }
 
+   function generateScreenshot(selector) {
+    return html2canvas(document.querySelector(selector), {
+            logging: true,
+            profile: true,
+            useCORS: true,
+            async: true
+        }).then(function(canvas) {
+        var data = canvas.toDataURL('image/jpeg', 0.9);
+        return encodeURI(data);
+    });
+  }
+
   function stopChangingColor() {
      var path = $(this).first().getPath()
      var style = styleFeedbackMap.get(path)
@@ -25,15 +42,13 @@ $(document).ready(function() {
    }
 
    function stopBtn(e) {
+     e.preventDefault()
      $('body > .feedback-tooltip:has(.feedback-tooltip-window)').remove()
      var path = $(this).first().getPath()
-     // var style = styleFeedbackMap.get(path)
-     // document.querySelector(path).style = style
      highlightClicked = true
-     // $(this).bind( "mouseover", changeColor);
-     // $(this).bind( "mouseleave", stopChangingColor);
      $(this).off('click.disabled');
      $(this).unbind('click', clickFeedbackHandler);
+     $(this).unbind('click', stopBtn);
     }
 
   function submitBtn(e) {
@@ -43,33 +58,41 @@ $(document).ready(function() {
      var feedbackText = $('div.feedback-tooltip textarea').val()
 
      var selector = $(this).first().getPath()
-      $.ajax({
-        url: `${endPoint}/submitFeeddback`,
-        type: "POST",
-        dataType: 'json',
-        data: {
-          selector,
-          page,
-          domain,
-          userId: '1',
-          feedbackRate,
-          feedbackText
+     var elem = clickElementFeedback.find( x => x.selector === selector.replace(/html>body>div:nth-child\(\d\)/g ,'#canvas'))
+     let data = {
+       selector,
+       page,
+       domain,
+       dataUri: elem.dataUri,
+       userId: '1',
+       feedbackRate,
+       feedbackText
+      }
+
+     $.ajax({
+         url: `${endPoint}/submitFeeddback/`,
+         method: 'POST',
+         contentType: 'application/x-www-form-urlencoded',
+         headers: {
+           'Access-Control-Allow-Origin': '*',
+           'Access-Control-Allow-Headers': 'Authorization, Content-Type'
          },
-        ContentType: 'application/json',
-        success: function(data) {
-          $('#feedback-form').hide();
-          $('#feedback-success_message').show();
-          console.log('feedback submitted');
-        },
-        error: function(jqXHR) {
-          console.log(jqXHR);
-        }
-   })
+         data,
+         success: function(data) {
+           $('#feedback-form').hide();
+           $('#feedback-success_message').show();
+           console.log('feedback submitted');
+         },
+         error: function(request,msg,error) {
+         //  alert(error)
+         }
+     });
 
      highlightClicked = true
      // $(this).off('click.disabled');
      $('.header-img').prop('src', 'images/checkmark-48.png')
      $(this).unbind('click', clickFeedbackHandler);
+     $(this).unbind('click', stopBtn);
      e.preventDefault()
    }
 
@@ -131,75 +154,57 @@ $(document).ready(function() {
                 path = name + (path ? '>' + path : '');
                 node = parent;
             }
-
             return path;
+        },
+        popupFeedbackIcon: function (divToPop) {
+            var pos=$(this).offset();
+            var h=$(this).height();
+            var w=$(this).width();
+            var windowWidht = screen.width;
+            var windowHeight = screen.height;
+
+            var top = pos.top + ( h * 0.3)
+            var left = (pos.left === 0) ? w : pos.left + w
+            $(divToPop).css({ left , top });
+        },
+        popupFeedbackForm: function (divToPop) {
+            var pos=$(this).offset();
+            var h=$(this).height();
+            var w=$(this).width();
+            var windowWidht = screen.width;
+            var windowHeight = screen.height;
+
+            var left = ( pos.left + w + 200 > screen.width ) ? screen.width - 400 : pos.left + 100
+            var top =  pos.top + 50
+            $(divToPop).css({ left , top });
+
+            $(this).click(function(e) {
+                $(divToPop).css({ left , top });
+                if ($(divToPop).css('display') !== 'none') {
+                    $(divToPop).hide();
+                }
+                else {
+                    $(divToPop).show();
+                }
+            });
         }
      });
-
-     $.fn.popupDiv2 = function (divToPop) {
-         var pos=$(this).offset();
-         var h=$(this).height();
-         var w=$(this).width();
-         var windowWidht = screen.width;
-         var windowHeight = screen.height;
-         var left = ( pos.left + w + 200 > screen.width ) ? screen.width - 80 : pos.left + 215
-         var top =   pos.top - 15
-
-
-         $(divToPop).css({ left , top });
-
-         $(this).click(function(e) {
-             $(divToPop).css({ left , top });
-             if ($(divToPop).css('display') !== 'none') {
-                 $(divToPop).hide();
-             }
-             else {
-                 $(divToPop).show();
-             }
-         });
-     };
-
-    $.fn.popupDiv = function (divToPop) {
-        var pos=$(this).offset();
-        var h=$(this).height();
-        var w=$(this).width();
-        var windowWidht = screen.width;
-        var windowHeight = screen.height;
-
-        var left = ( pos.left + w + 200 > screen.width ) ? screen.width - 400 : pos.left + 100
-        var top =  pos.top + 50
-        $(divToPop).css({ left , top });
-
-        $(this).click(function(e) {
-            $(divToPop).css({ left , top });
-            if ($(divToPop).css('display') !== 'none') {
-                $(divToPop).hide();
-            }
-            else {
-                $(divToPop).show();
-            }
-        });
-    };
 
    ['click'].forEach(function (name) {
      var eventElements = ['LI','A','BUTTON']
      var target = null;
      window.addEventListener(name, function (ev) {
-       // console.log(ev);
-       // console.log(ev);
+       // ev.preventDefault()
        if ($('.feedback-tooltip').find(ev.target).length === 0) {
-       // if (eventElements.includes(ev.target.nodeName)) {
-       //   target = ev.target
-       // } else
-        if (eventElements.includes(ev.target.parentElement.nodeName)) {
+       if (eventElements.includes(ev.target.parentElement.nodeName)) {
          target = ev.target.parentElement
        }
        else {
          target = ev.target.offsetParent
        }
-       // console.log(target);
        if (target && target.tagName) {
        var path = $(target).first().getPath()
+
        let elementInfo = {}
        $(target).each(function() {
          $.each(this.attributes, function() {
@@ -212,35 +217,39 @@ $(document).ready(function() {
        if (text && text.length > 0 &&  text.length < 100 ) elementInfo['text'] = text
        if (target.tagName) elementInfo['tagName'] = target.tagName
 
+       clicksFunnel.push(path)
+       let data
+       let uri = `${endPoint}/update/`
+       var dataUri =  generateScreenshot(path).then(dataUri => {
+         data =  {
+           domain,
+           userId: 1,
+           eventType: name,
+           selector: path,
+           elementInfo,
+           page,
+           dataUri
+          }
 
-       let data =  {
-         domain,
-         userId: 1,
-         eventType: name,
-         selector: path,
-         elementInfo,
-         page
-        }
+          console.log(data);
+          $.ajax({
+              url: uri,
+              method: 'PUT',
+              contentType: 'application/x-www-form-urlencoded',
+              headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Authorization, Content-Type'
+              },
+              data,
+              error: function(request,msg,error) {
+              //  alert(error)
+              }
+          });
+          // let aTag = $(target).attr("href")
+          // if (aTag)  window.location = aTag
+          // $(ev.target).trigger(name);
+       })
 
-        let success = function(result) {
-           alert(result)
-        }
-
-        let uri = `${endPoint}/update/`
-
-        $.ajax({
-            url: uri,
-            method: 'PUT',
-            contentType: 'application/x-www-form-urlencoded',
-            headers: {
-              'Access-Control-Allow-Origin': '*',
-              'Access-Control-Allow-Headers': 'Authorization, Content-Type'
-            },
-            data,
-            error: function(request,msg,error) {
-            //  alert(error)
-            }
-        });
         }
       }
       });
@@ -252,18 +261,10 @@ $(document).ready(function() {
       var counter = 0
         for (var elem of tempArray) {
           elem.selector = elem.selector.replace(/html>body>div:nth-child\(\d\)/g ,'#canvas')
-          //console.log(normSelector);
           if ($(elem.selector).length === 0 || page.match(elem.page) === null) continue
           var highlightClicked = false
           var path = $(elem.selector).first().getPath()
           var selectorStyle = document.querySelector(path).style
-          // styleFeedbackMap.set(path, selectorStyle);
-          //
-          // var color = {
-          //   border: '#90EE90',
-          //   background: 'transparent'
-          // }
-           //$(elem.selector).css("cssText", `border-color: ${color.border} !important; border-style: solid;border-width: 2px`);
              $(elem.selector).each(function( index ) {
                // $(elem.selector).parents().css('backgroundColor', 'transparent')
                var path = $(this).first().getPath()
@@ -272,17 +273,18 @@ $(document).ready(function() {
                tooltipDiv.setAttribute('id',  `feedback-icon${counter}`)
                tooltipDiv.innerHTML = `
                  <div class="feedback-tooltip-icon">
+                 <div class="item">
+                   <div class="item-inner">
+                     <a class="egg"></a>
+                   </div>
+                 </div>
                     <!--img width="74px" height="30px" src='images/rotating-question-mark-gif-39.gif' /-->
-                    <img width="150px" height="50px" src='images/feedback-icon-7-01.png' />
+                    <!--img width="150px" height="50px" src='images/feedback-icon-7-01.png' /-->
                  </div>
                `
-               // $(this).prepend(tooltipDiv)
-                $('body').prepend(tooltipDiv)
-               //console.log(this)
-               $(this).popupDiv2(tooltipDiv);
-
-               console.log(this);
-               $(tooltipDiv).bind('click', { form: elem.feedbackForm, elemenToAdd: this, elementToDelete: `feedback-icon${counter}` }, clickFeedbackHandler)
+              $('body').append(tooltipDiv)
+               $(this).popupFeedbackIcon(tooltipDiv);
+               $(tooltipDiv).find('.egg').bind('click', { form: elem.feedbackForm, elemenToAdd: this, elementToDelete: `feedback-icon${counter}` }, clickFeedbackHandler)
              });
              counter++
          }
@@ -290,22 +292,19 @@ $(document).ready(function() {
     }
 
     function clickFeedbackHandler(e) {
-      console.log(`#${e.data.elementToDelete}`);
        e.stopPropagation()
        document.getElementById(e.data.elementToDelete).remove()
-       //$('body > .feedback-tooltip:has(.feedback-tooltip-window)').remove()
-       // $(`#${e.data.elementToDelete}`).remove()
-       // $('body').find('div.feedback-tooltip').remove()
        var tooltipDiv = document.createElement('div')
        tooltipDiv.setAttribute('class', 'feedback-tooltip')
 
        tooltipDiv.innerHTML = retriveFormFeedback(e.data.form)
-       $('body').prepend(tooltipDiv)
-       $(e.data.elemenToAdd).popupDiv('body > .feedback-tooltip');
+       $('body').append(tooltipDiv)
+       $(e.data.elemenToAdd).popupFeedbackForm('body > .feedback-tooltip');
        $(e.data.elemenToAdd).on('click.disabled', false);
        $('.smile').bind( 'change', smileSelection.bind(e.data.elemenToAdd))
        $('.close').bind('click', stopBtn.bind(e.data.elemenToAdd))
        $('[id*="-submit"]').bind('click', submitBtn.bind(e.data.elemenToAdd))
+       $(this).unbind('click' , clickFeedbackHandler)
        highlightClicked = true
        e.preventDefault()
      }
@@ -316,7 +315,6 @@ $(document).ready(function() {
    }
 
    function getElementsForFeedbacks() {
-      var page = window.location.pathname.replace('/', '').replace('.html', '')
       let uri = `${endPoint}/getFeedbackElement/${domain}?page=${page}`
        $.ajax({
          url: uri,
@@ -328,6 +326,7 @@ $(document).ready(function() {
          },
          success: function(result) {
            console.log(result);
+           clickElementFeedback = result
            highlightFeedback(result)
          },
          error: function(request,msg,error) {
